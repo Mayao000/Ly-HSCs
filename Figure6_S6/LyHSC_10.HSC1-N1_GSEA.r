@@ -93,17 +93,6 @@ options(Seurat.object.assay.version = "v5")
 load("/home/mayao/genome_file/GeneSets/KEGG.kegg_gs.mapping.pathways.rdata")
 gene_set_list <- kegg_gs
 
-# selected_terms <- c(grep("neutrophil", names(gene_set_list)), 
-#                     grep("monocyte", names(gene_set_list)), 
-#                     grep("lymph", names(gene_set_list)), 
-#                     grep("_b_cell", names(gene_set_list)),
-#                     grep("_t_cell", names(gene_set_list)),
-#                     grep("myeloid", names(gene_set_list)),
-#                     grep("megakaryo", names(gene_set_list)),
-#                     grep("platelet", names(gene_set_list)))
-# gene_set_list_sub <- gene_set_list[selected_terms]
-# names(gene_set_list_sub)
-
 gene_set_list_sub <- gene_set_list
 processed_gsls <- list()
 for (term in names(gene_set_list_sub)){
