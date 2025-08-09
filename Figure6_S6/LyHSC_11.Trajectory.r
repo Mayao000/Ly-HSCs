@@ -77,49 +77,12 @@ obj$Group <- factor(obj$Group, levels = c("HSC1", "N1", "N2", "Ly-I" ))
 obj@reductions %>% names()
 table(obj$Group)
 
+
 ## ------------------------------------------------------------------------------------
-## 1. Diffusion map
-# obs <- c("Group", "seurat_clusters")
-# group.by <- "Group"
-
-# return_list <- setup_anndata(obj, obs=obs, pca_name='pca', umap_name='umap.pca', n_pcs=6, n_neighbors=30)
-# sc <- return_list[['sc']]
-# adata <- return_list[['adata']]
-
-# sc$tl$diffmap(adata)
-# oupDR <- py_to_r(adata$obsm['X_diffmap'])
-# rownames(oupDR) <- colnames(obj)
-# colnames(oupDR) <- paste0("DC_", 0:(15-1))
-# oupDR <- oupDR[, paste0("DC_", seq(3))]
-# obj[["diffmap"]] = CreateDimReducObject(embeddings = oupDR, key = "DC_",
-#                                         assay = DefaultAssay(obj))
-
-# p3 <- dimplot(obj, reduction = "diffmap", group.by='Group', pt.size = 1.5, 
-#             label = FALSE,
-#             dims = c(1,2))+
-#             force_panelsizes(rows=unit(6,"cm"), cols=unit(5,"cm"))
-# p4 <- dimplot(obj, reduction = "diffmap", group.by='Group', pt.size = 1.5, 
-#             label = FALSE,
-#             dims = c(1,3))+
-#             force_panelsizes(rows=unit(6,"cm"), cols=unit(5,"cm"))
-# p3
-# p4
-# save_plotlist(plotlist=c(list(p3),list(p4)), ncol=2, outfile="plot/91.RCombineHSC1.hsc1hsc2-n1n2n3.diffusionmap.pdf", width=15, height=10) 
-
-
-# library(plotly)
-# dc <- Embeddings(obj, reduction = "diffmap") %>% as.data.frame()
-# dc$Group <- obj$Group
-
-# p5 <- plot_ly(x=as.numeric(dc$DC_1), y=dc$DC_2, z=dc$DC_3, type="scatter3d", mode="markers", color=dc$Group, colors = colGroup)
-# htmlwidgets::saveWidget(p5, file = "plot/93.RCombineHSC1.hsc1hsc2-n1n2n3.3D-diffusionmap.html")
-
-
 ## Diffusion map
 obs <- c("Group", "Phase")
 group.by <- "Group"
 pca_name <- "harmony"
-
 
 return_list <- setup_anndata(obj, obs=obs, pca_name=pca_name, umap_name=paste0('umap.', pca_name), n_pcs=6, n_neighbors=30)
 sc <- return_list[['sc']]
@@ -144,63 +107,7 @@ htmlwidgets::saveWidget(p, file = paste0("plot/94.RCombineHSC1.hsc1hsc2-n1n2n3.3
 
 
 ## -------------------------------------------------------------------------------------
-## 3. Diffusion Map and PAGA
-message('#### Diffusion Map and PAGA ####')
-obs <- c("Group", "Phase")
-group.by <- 'Group'
-pca_name <- "harmony"
-umap_name=paste0('umap.', pca_name)
-nPC <- 6
-colors <- colGroup
-
-return_list <- setup_anndata(obj, obs=obs, pca_name=pca_name, umap_name=umap_name, n_pcs=nPC, n_neighbors=30)
-sc <- return_list[['sc']]
-adata <- return_list[['adata']]
-
-sc$tl$diffmap(adata)
-adata$obs
-
-plotname1 <- paste0('plot/temp.hsc1hsc2-n1n2n3.PAGA.PAGAgraph.pdf')
-plotname2 <- paste0('plot/temp.hsc1hsc2-n1n2n3.PAGA.Group.pdf')
-plotname3 <- paste0('plot/temp.hsc1hsc2-n1n2n3.PAGA.dpt.pdf')
-# Run paga
-sc$tl$paga(adata, groups = group.by)
-
-# plot paga graph G*
-sc$pl$paga(adata, color= group.by, cmap = colors)
-py_run_string("fig1 = pl.gcf()")
-py_run_string("fig1.savefig(r.plotname1)")
-
-# initializing using paga
-sc$tl$draw_graph(adata, init_pos='paga')
-
-# draw paga in single-cell resolution 
-sc$pl$draw_graph(adata, color=group.by, palette = colors, return_fig=TRUE)
-py_run_string("fig2 = pl.gcf()")
-py_run_string("fig2.savefig(r.plotname2)")
-
-# run dpt
-py_run_string(paste0("r.adata.uns['iroot'] = np.flatnonzero(r.adata.obs['Group']  == 'HSC1')[0]"))
-sc$tl$dpt(adata)
-
-# draw dpt
-sc$pl$draw_graph(adata, color=c(group.by, 'dpt_pseudotime'), legend_loc='on data', return_fig=TRUE)
-py_run_string("fig3 = pl.gcf()")
-py_run_string("fig3.savefig(r.plotname3)")
-
-# add to seurat meta
-obj$paga_dpt <- py_to_r(adata$obs$dpt_pseudotime)
-obj$paga_rank <- rank(obj$paga_dpt)
-
-message("**** Plot boxplot ****")
-p <- pseudotime_boxplot(obj, group.by='Group', rank.by='paga_rank', group.colors=colCls)
-p
-
-
-
-
-## -------------------------------------------------------------------------------------
-## 4 Monocle
+## Monocle3
 active_idents <- 'Group'
 reduc <- 'umap.harmony'
 rootCellType <- 'HSC1'
@@ -222,23 +129,6 @@ cds <- learn_graph(cds, use_partition = F)
 # ## Order
 # cds <- order_cells(cds, reduction_method='UMAP', root_cells = colnames(cds[, clusters(cds) == rootCellType]))
 
-# ## Plot pseudotime trajectory
-# # plotcol <- cols_map[cut(pseudotime(cds), breaks=100)]
-# my_plot_cells(cds, 
-#                 reduction_method = 'UMAP',
-#                 color_cells_by = "cluster", 
-#                 label_groups_by_cluster = F,
-#                 label_branch_points = F, 
-#                 label_roots = FALSE, 
-#                 label_leaves = FALSE,
-#                 cell_size = 1.5,
-#                 alpha = 0.5,
-#                 plotcol_div=colGroup,
-#                 # plotcol_map=cols_map,
-#                 trajectory_graph_color="black",
-#                 trajectory_graph_segment_size=0.8,
-#                 width = 6,
-#                 height = 5)
 
 ## get principal graph
 principal_coords <- cds@principal_graph_aux[["UMAP"]]$dp_mst %>% t() %>% as.data.frame()
@@ -272,8 +162,3 @@ for (i in 1:nrow(graph_edges)) {
 
 htmlwidgets::saveWidget(p, file = paste0("plot/97.RCombineHSC1.hsc1hsc2-n1n2n3.3D-umapharmony-Monocle3.html"))
 
-
-
-# plot_genes_in_pseudotime(cds[c("Gata2", "Runx1", "Itgam"),])
-# ggsave("plot/84.RCombineHSC1.hsc1-n1n2n3.monocle3.pdf")
-ggsave("plot/92.RCombineHSC1.hsc1hsc2-n1n2n3.monocle3.pdf")
