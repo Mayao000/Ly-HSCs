@@ -77,45 +77,8 @@ obj$Group <- factor(obj$Group, levels = c("HSC1", "N1", "N2", "Ly-I" ))
 obj@reductions %>% names()
 table(obj$Group)
 
-## -------------------------------------------------------------------------------------
-## 1. Slingshot
-library(slingshot) %>% suppressMessages()
-reduc <- 'umap.harmony'
-group.by <- 'Group'
-rootCellType <- 'HSC1'
-endCellType <- "Ly-I"
-assay <- "RNA"
-
-
-return_list <- do_slingshot(obj, assay=assay, reduction=reduc, group.by=group.by, 
-                            start.clus=rootCellType, 
-                            end.clus = endCellType,
-                            approx_points=200)
-slsMST <- return_list[['slsMST']]
-print(slsMST)
-slsCrv <- return_list[['slsCrv']]
-
-p1 <- DimPlot(obj, reduction=reduc, group.by = group.by, pt.size=1.5, label=FALSE, label.size=3, cols=colGroup) + 
-        plotTheme + 
-        coord_fixed() +
-        geom_point(data = slsMST, aes(umapharmony_1, umapharmony_2), size = 3, color = "grey15") +
-        geom_path(data = slsMST %>% arrange(Order), aes(umapharmony_1, umapharmony_2, group = Lineage))+
-        force_panelsizes(rows = unit(5, "cm"), cols = unit(6, "cm"))
-p1
-p2 <- DimPlot(obj, reduction=reduc, group.by = group.by, pt.size=2, label=FALSE, label.size=3, cols=colGroup) +
-        plotTheme + 
-        coord_fixed() +
-        geom_path(data = slsCrv %>% arrange(Order),aes(umapharmony_1, umapharmony_2, group = Lineage)) +
-        force_panelsizes(rows = unit(5, "cm"), cols = unit(6, "cm"))
-p2
-
-save_plotlist(plotlist=c(list(p1),list(p2)), ncol=2, outfile="plot/90.RCombineHSC1.hsc1hsc2-n1n2n3.slingshot.pdf", width=15, height=10) 
-
-
-
-
-## -------------------------------------------------------------------------------------
-## 2. Diffusion map
+## ------------------------------------------------------------------------------------
+## 1. Diffusion map
 # obs <- c("Group", "seurat_clusters")
 # group.by <- "Group"
 
